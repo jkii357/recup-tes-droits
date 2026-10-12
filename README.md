@@ -8,7 +8,7 @@ Direction visuelle : « L'avis officiel » — logo badge/tampon, fond bleu nuit
 
 ## Voir le site
 
-En ligne : **[à compléter une fois la page GitHub Pages activée]**.
+En ligne : **https://jkii357.github.io/recup-tes-droits/**
 
 En local — contrairement à un site vitrine classique, **ne double-clique pas sur `index.html`**. Ce site a plusieurs pages (espace client, espace admin) qui partagent des données entre elles via le navigateur (`localStorage`) : il faut que tout soit servi depuis la même origine `http://`, sinon ces fonctionnalités ne marchent pas de façon fiable.
 
