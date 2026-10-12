@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiche client — Espace admin — Récup tes Droits</title>
+<meta name="description" content="Fiche client — dossier, documents et messagerie.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='33' fill='%23D7263D'/%3E%3Ccircle cx='50' cy='50' r='27' fill='%230B1B33'/%3E%3Cpath d='M 34,52 L 45,63 L 69,35' fill='none' stroke='%23F7F5EF' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body data-page="admin-app">
+<script src="/assets/js/admin-auth.js"></script>
+<script src="/assets/js/store.js"></script>
+<script src="/assets/js/files-db.js"></script>
+<script src="/assets/js/chrome.js"></script>
+<script src="/assets/js/admin-client.js" defer></script>
+
+<main id="contenu">
+  <div class="app-shell">
+    <div class="wrap">
+      <a class="back-to-list" href="/espace-admin/tableau-de-bord.html">&larr; Retour à l'espace admin</a>
+
+      <div id="rtd-client-not-found" class="app-card" hidden>
+        <div class="empty-state">
+          <strong>Client introuvable</strong>
+          Ce lien ne correspond à aucun client enregistré dans cette démo.
+        </div>
+      </div>
+
+      <div id="rtd-client-fiche">
+        <div class="client-header">
+          <div>
+            <h1 id="rtd-c-nom"></h1>
+            <div class="client-header__meta">
+              <span id="rtd-c-email"></span>
+              <span id="rtd-c-tel"></span>
+              <span id="rtd-c-naissance"></span>
+              <span id="rtd-c-since"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab-btn is-active" data-tab="tab-dossier">Dossier</button>
+          <button type="button" class="tab-btn" data-tab="tab-documents">Documents</button>
+          <button type="button" class="tab-btn" data-tab="tab-messages">Messages</button>
+        </div>
+
+        <section id="tab-dossier" class="tab-panel">
+          <div class="app-card">
+            <h2>Avancement du dossier</h2>
+            <p class="app-card__note">Modifie le statut de chaque étape — le client le voit mis à jour dans son espace.</p>
+            <div id="rtd-dossier-rows"></div>
+          </div>
+        </section>
+
+        <section id="tab-documents" class="tab-panel" hidden>
+          <div class="app-card">
+            <h2>Documents déposés</h2>
+            <p class="app-card__note">Ouvre un document pour le consulter, puis mets à jour son statut.</p>
+            <div id="rtd-doc-list"></div>
+          </div>
+        </section>
+
+        <section id="tab-messages" class="tab-panel" hidden>
+          <div class="app-card">
+            <h2>Messagerie</h2>
+            <div id="rtd-msg-thread" class="msg-thread"></div>
+            <form id="rtd-msg-form" class="msg-compose">
+              <textarea name="message" placeholder="Répondre au client..." required></textarea>
+              <button type="submit" class="btn btn--on-paper">Envoyer</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

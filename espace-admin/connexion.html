@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accès équipe — Récup tes Droits</title>
+<meta name="description" content="Accès réservé à l'équipe Récup tes Droits.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='33' fill='%23D7263D'/%3E%3Ccircle cx='50' cy='50' r='27' fill='%230B1B33'/%3E%3Cpath d='M 34,52 L 45,63 L 69,35' fill='none' stroke='%23F7F5EF' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body data-page="admin-auth">
+<script src="/assets/js/admin-auth.js"></script>
+<script src="/assets/js/chrome.js"></script>
+
+<main id="contenu">
+  <div class="app-shell">
+    <div class="wrap">
+      <div class="auth-card">
+        <h1>Accès équipe</h1>
+        <p class="auth-card__lede">Espace réservé à Récup tes Droits pour gérer les rendez-vous, les dossiers clients et les avis affichés sur le site.</p>
+
+        <div id="rtd-admin-login-status" class="form-status" role="status"></div>
+
+        <form id="rtd-admin-login-form" novalidate>
+          <div class="field">
+            <label for="admin-code">Code d'accès</label>
+            <input type="password" id="admin-code" name="code" autocomplete="off" required>
+          </div>
+          <button type="submit" class="btn btn--stamp btn--block">Accéder à l'espace admin</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

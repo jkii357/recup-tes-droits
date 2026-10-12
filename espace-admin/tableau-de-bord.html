@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Espace admin — Récup tes Droits</title>
+<meta name="description" content="Rendez-vous, dossiers clients et avis affichés — Récup tes Droits.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='33' fill='%23D7263D'/%3E%3Ccircle cx='50' cy='50' r='27' fill='%230B1B33'/%3E%3Cpath d='M 34,52 L 45,63 L 69,35' fill='none' stroke='%23F7F5EF' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+<link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body data-page="admin-app">
+<script src="/assets/js/admin-auth.js"></script>
+<script src="/assets/js/store.js"></script>
+<script src="/assets/js/chrome.js"></script>
+<script src="/assets/js/admin-dashboard.js" defer></script>
+
+<main id="contenu">
+  <div class="app-shell">
+    <div class="wrap">
+      <div class="admin-toolbar">
+        <div class="admin-toolbar__title">
+          <h1>Espace admin</h1>
+          <p>Rendez-vous, inscriptions et avis affichés sur le site.</p>
+        </div>
+      </div>
+
+      <div class="notice" id="rtd-admin-notif" hidden style="margin-bottom: var(--space-5);"></div>
+
+      <div class="app-card">
+        <div class="admin-grid-head"><h2>Rendez-vous reçus</h2></div>
+        <p class="app-card__note">Soumis via le widget de prise de RDV sur la page d'accueil.</p>
+        <div class="table-scroll">
+          <table class="data-table" id="rtd-admin-rdv-table" hidden>
+            <thead><tr><th>Date</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Reçu le</th></tr></thead>
+            <tbody id="rtd-admin-rdv-body"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="rtd-admin-rdv-empty">
+          <strong>Aucun rendez-vous pour le moment</strong>
+          Les réservations faites depuis le site apparaîtront ici automatiquement.
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="admin-grid-head"><h2>Nouvelles inscriptions</h2></div>
+        <p class="app-card__note">Clique sur un client pour ouvrir sa fiche, mettre à jour son dossier et lui répondre.</p>
+        <div class="table-scroll">
+          <table class="data-table" id="rtd-admin-clients-table" hidden>
+            <thead><tr><th>Client</th><th>Email</th><th>Inscrit le</th><th>Dossier</th></tr></thead>
+            <tbody id="rtd-admin-clients-body"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="rtd-admin-clients-empty">
+          <strong>Aucune inscription pour le moment</strong>
+          Les nouveaux espaces clients apparaîtront ici automatiquement.
+        </div>
+      </div>
+
+      <div class="app-card">
+        <div class="admin-grid-head"><h2>Avis &amp; témoignages affichés</h2></div>
+        <p class="app-card__note">Choisis les avis mis en avant sur la page d'accueil.</p>
+        <div id="rtd-admin-reviews"></div>
+      </div>
+
+      <div class="danger-zone">
+        <p><strong>Réinitialiser la démo</strong> — efface tous les rendez-vous, clients, messages et documents de test, et restaure les avis d'exemple. Utile entre deux présentations.</p>
+        <button type="button" class="btn btn--ghost btn--sm" id="rtd-admin-reset">Réinitialiser la démo</button>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

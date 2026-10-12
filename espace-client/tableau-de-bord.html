@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon espace client — Récup tes Droits</title>
+<meta name="description" content="Suis l'avancement de ton dossier, dépose tes documents et échange avec Récup tes Droits.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='33' fill='%23D7263D'/%3E%3Ccircle cx='50' cy='50' r='27' fill='%230B1B33'/%3E%3Cpath d='M 34,52 L 45,63 L 69,35' fill='none' stroke='%23F7F5EF' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+</head>
+<body data-page="client-app">
+<script src="/assets/js/store.js"></script>
+<script src="/assets/js/files-db.js"></script>
+<script src="/assets/js/chrome.js"></script>
+<script src="/assets/js/client-dashboard.js" defer></script>
+
+<main id="contenu">
+  <div class="app-shell">
+    <div class="wrap">
+      <div class="app-welcome">
+        <h1>Bonjour <span id="rtd-client-prenom"></span></h1>
+        <span class="meta" id="rtd-client-since"></span>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab-btn is-active" data-tab="tab-dossier">Mon dossier</button>
+        <button type="button" class="tab-btn" data-tab="tab-documents">Mes documents</button>
+        <button type="button" class="tab-btn" data-tab="tab-messagerie">Messagerie</button>
+      </div>
+
+      <section id="tab-dossier" class="tab-panel">
+        <div class="app-card">
+          <h2>Avancement de ton dossier</h2>
+          <p class="app-card__note">Mis à jour par Récup tes Droits à chaque étape franchie.</p>
+          <div id="rtd-dossier-rows"></div>
+        </div>
+      </section>
+
+      <section id="tab-documents" class="tab-panel" hidden>
+        <div class="app-card">
+          <h2>Documents de ton dossier</h2>
+          <p class="app-card__note">Dépose les pièces demandées ci-dessous. D'autres documents pourront être ajoutés à cette liste selon ton dossier.</p>
+          <div id="rtd-doc-types"></div>
+        </div>
+      </section>
+
+      <section id="tab-messagerie" class="tab-panel" hidden>
+        <div class="app-card">
+          <h2>Tes questions</h2>
+          <p class="app-card__note">Écris ici pour toute question sur ton dossier — je réponds directement.</p>
+          <div id="rtd-msg-thread" class="msg-thread"></div>
+          <form id="rtd-msg-form" class="msg-compose">
+            <textarea name="message" placeholder="Écris ton message..." required></textarea>
+            <button type="submit" class="btn btn--on-paper">Envoyer</button>
+          </form>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+</body>
+</html>

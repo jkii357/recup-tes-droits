@@ -1,0 +1,102 @@
+/* ==========================================================================
+   client.css — Espace client (mode Operate : dense, calme, sans fioritures
+   marketing). Chargé en plus de style.css, uniquement sur l'espace client.
+   ========================================================================== */
+
+body[data-page="client-auth"],
+body[data-page="client-app"] { background: var(--navy); }
+
+.app-shell { padding: var(--space-6) 0 var(--space-8); min-height: 60vh; }
+.app-shell .wrap { color: var(--on-navy); }
+
+/* --- Authentification / inscription --- */
+.auth-card {
+  max-width: 480px;
+  margin: var(--space-6) auto;
+  background: #fff;
+  color: var(--ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-paper);
+  padding: var(--space-6);
+}
+.auth-card h1 { color: var(--ink); font-size: var(--fs-h3); margin-bottom: var(--space-2); }
+.auth-card__lede { color: var(--ink-soft); margin-bottom: var(--space-5); }
+.auth-card__switch { text-align: center; margin-top: var(--space-4); font-size: 0.92rem; color: var(--ink-soft); }
+.auth-card__switch a { color: var(--ink); font-weight: 700; text-decoration: underline; }
+
+/* --- Accueil de l'espace --- */
+.app-welcome { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); }
+.app-welcome h1 { color: var(--on-navy); font-size: var(--fs-h3); }
+.app-welcome .meta { color: var(--on-navy-soft); font-size: 0.9rem; }
+
+/* --- Tabs --- */
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 2px solid rgba(247, 245, 239, 0.14);
+  margin-bottom: var(--space-5);
+  overflow-x: auto;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.85em 0.25em;
+  margin-right: var(--space-5);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--on-navy-soft);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+.tab-btn.is-active { color: var(--on-navy); border-bottom-color: var(--red); }
+.tab-btn .count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--red); color: #fff; font-size: 0.7rem; margin-left: 0.4em; }
+.tab-panel[hidden] { display: none; }
+
+/* --- Carte générique espace client --- */
+.app-card { background: #fff; color: var(--ink); border-radius: var(--radius-md); box-shadow: var(--shadow-paper); padding: var(--space-5); margin-bottom: var(--space-4); }
+.app-card h2 { color: var(--ink); font-size: 1.2rem; margin-bottom: var(--space-1); }
+.app-card__note { color: var(--ink-soft); font-size: 0.88rem; margin-bottom: var(--space-4); }
+
+/* --- Suivi de dossier --- */
+.status-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid rgba(22, 35, 61, 0.08); }
+.status-row:last-child { border-bottom: none; }
+.status-row__label b { display: block; color: var(--ink); }
+.status-row__label span { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* --- Documents --- */
+.doc-type { padding: var(--space-4) 0; border-bottom: 1px solid rgba(22, 35, 61, 0.08); }
+.doc-type:last-child { border-bottom: none; }
+.doc-type__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-1); flex-wrap: wrap; }
+.doc-type__head b { color: var(--ink); }
+.doc-type__hint { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: var(--space-3); }
+.doc-file-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--paper-dim); border-radius: var(--radius-sm); padding: 0.6em 0.9em; margin-bottom: 0.5em; font-size: 0.9rem; }
+.doc-file-row__name { display: flex; align-items: center; gap: 0.6em; color: var(--ink); font-weight: 600; min-width: 0; }
+.doc-file-row__name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-file-row__actions { display: flex; align-items: center; gap: 0.6em; flex-shrink: 0; }
+.doc-file-row__actions button { background: none; border: none; color: var(--ink-soft); text-decoration: underline; cursor: pointer; font-size: 0.85rem; padding: 0; }
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  background: var(--navy);
+  color: var(--on-navy);
+  padding: 0.55em 1em;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.file-input-label:hover { background: var(--navy-raised); }
+.file-input-label input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.doc-demo-notice { font-size: 0.8rem; color: var(--ink-soft); font-style: italic; margin-top: var(--space-2); }
+
+/* --- Messagerie --- */
+.msg-thread { display: flex; flex-direction: column; gap: var(--space-3); max-height: 420px; overflow-y: auto; padding: var(--space-1) var(--space-1) var(--space-3); margin-bottom: var(--space-4); }
+.msg-bubble { max-width: 75%; padding: 0.7em 1em; border-radius: var(--radius-md); font-size: 0.92rem; line-height: 1.4; }
+.msg-bubble__meta { display: block; font-size: 0.72rem; margin-top: 0.3em; opacity: 0.7; }
+.msg-bubble--client { align-self: flex-end; background: var(--navy); color: var(--on-navy); border-bottom-right-radius: 3px; }
+.msg-bubble--admin { align-self: flex-start; background: var(--paper-dim); color: var(--ink); border-bottom-left-radius: 3px; }
+.msg-empty { color: var(--ink-soft); font-style: italic; text-align: center; padding: var(--space-4) 0; }
+.msg-compose { display: flex; gap: var(--space-3); align-items: flex-end; }
+.msg-compose textarea { flex: 1; resize: vertical; min-height: 44px; }

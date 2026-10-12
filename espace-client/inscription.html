@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Créer mon espace client — Récup tes Droits</title>
+<meta name="description" content="Crée ton espace client Récup tes Droits pour suivre l'avancement de ta création d'entreprise et de tes droits ARCE.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='33' fill='%23D7263D'/%3E%3Ccircle cx='50' cy='50' r='27' fill='%230B1B33'/%3E%3Cpath d='M 34,52 L 45,63 L 69,35' fill='none' stroke='%23F7F5EF' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+<link rel="stylesheet" href="/assets/css/client.css">
+</head>
+<body data-page="client-auth">
+<script src="/assets/js/store.js"></script>
+<script src="/assets/js/chrome.js"></script>
+<script src="/assets/js/client-inscription.js" defer></script>
+
+<main id="contenu">
+  <div class="app-shell">
+    <div class="wrap">
+      <div class="auth-card">
+        <h1>Crée ton espace client</h1>
+        <p class="auth-card__lede">Renseigne tes informations pour démarrer : tu pourras ensuite suivre l'avancement de ton dossier, déposer tes documents et échanger avec moi.</p>
+
+        <div id="rtd-inscription-status" class="form-status" role="status"></div>
+
+        <form id="rtd-inscription-form" novalidate>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 var(--space-4);">
+            <div class="field">
+              <label for="insc-prenom">Prénom</label>
+              <input type="text" id="insc-prenom" name="prenom" autocomplete="given-name" required>
+              <span class="error-msg"></span>
+            </div>
+            <div class="field">
+              <label for="insc-nom">Nom</label>
+              <input type="text" id="insc-nom" name="nom" autocomplete="family-name" required>
+              <span class="error-msg"></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="insc-email">Adresse email</label>
+            <input type="email" id="insc-email" name="email" autocomplete="email" required>
+            <span class="error-msg"></span>
+          </div>
+          <div class="field">
+            <label for="insc-telephone">Numéro de téléphone</label>
+            <input type="tel" id="insc-telephone" name="telephone" autocomplete="tel" placeholder="06 12 34 56 78" required>
+            <span class="error-msg"></span>
+          </div>
+          <div class="field">
+            <label for="insc-naissance">Date de naissance</label>
+            <input type="date" id="insc-naissance" name="dateNaissance" autocomplete="bday" required>
+            <small class="help">Utile pour vérifier certains critères d'éligibilité à l'ACRE et à l'ARCE.</small>
+            <span class="error-msg"></span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 var(--space-4);">
+            <div class="field">
+              <label for="insc-mdp">Mot de passe</label>
+              <input type="password" id="insc-mdp" name="motDePasse" autocomplete="new-password" minlength="8" required>
+              <small class="help">8 caractères minimum.</small>
+              <span class="error-msg"></span>
+            </div>
+            <div class="field">
+              <label for="insc-mdp-confirm">Confirmer le mot de passe</label>
+              <input type="password" id="insc-mdp-confirm" name="motDePasseConfirm" autocomplete="new-password" minlength="8" required>
+              <span class="error-msg"></span>
+            </div>
+          </div>
+          <div class="field field-check">
+            <input type="checkbox" id="insc-consentement" name="consentement" required>
+            <label for="insc-consentement" style="font-weight:400;">J'accepte que mes informations soient utilisées pour le suivi de mon dossier — voir la <a href="/politique-de-confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</label>
+          </div>
+          <button type="submit" class="btn btn--stamp btn--block">Créer mon espace client</button>
+        </form>
+
+        <p class="auth-card__switch">Tu as déjà un espace client ? <a href="/espace-client/connexion.html">Connecte-toi</a>.</p>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

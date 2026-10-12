@@ -1,0 +1,8 @@
+# Fichiers macOS
+.DS_Store
+
+# Configuration locale de l'éditeur / serveur de test
+.claude/
+
+# État interne du skill impeccable (régénérable)
+.impeccable/
