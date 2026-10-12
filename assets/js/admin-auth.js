@@ -23,7 +23,7 @@
 
   // Garde immédiate sur les pages protégées, avant tout rendu de données.
   if (PAGE === "admin-app" && !isAuthenticated()) {
-    window.location.replace("/espace-admin/connexion.html");
+    window.location.replace("connexion.html");
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -31,7 +31,7 @@
     if (!form) return;
 
     if (isAuthenticated()) {
-      window.location.replace("/espace-admin/tableau-de-bord.html");
+      window.location.replace("tableau-de-bord.html");
       return;
     }
 
@@ -41,7 +41,7 @@
       var statusEl = document.getElementById("rtd-admin-login-status");
       if (code === RTD_DEMO_ADMIN_CODE) {
         try { sessionStorage.setItem(SESSION_KEY, "1"); } catch (err) {}
-        window.location.href = "/espace-admin/tableau-de-bord.html";
+        window.location.href = "tableau-de-bord.html";
       } else {
         statusEl.textContent = "Code d'accès incorrect.";
         statusEl.className = "form-status form-status--err is-visible";

@@ -2,22 +2,24 @@
  * chrome.js — injecte la bannière maquette, le header et le footer sur
  * chaque page. Un seul fichier à maintenir pour ces trois blocs.
  *
- * Toutes les pages utilisent des chemins racine (/index.html,
- * /assets/css/style.css...) : le site doit donc être servi par le serveur
- * local (python3 -m http.server, voir .claude/launch.json), jamais ouvert
- * en double-clic (file://).
+ * Tous les liens sont relatifs (jamais "/assets/...") pour fonctionner à
+ * la fois en local et sur un hébergement en sous-dossier comme GitHub
+ * Pages (ex. jkii357.github.io/recup-tes-droits/). Chaque page indique sa
+ * profondeur via <body data-base="">  (racine) ou data-base="../"
+ * (espace-client/, espace-admin/).
  *
- * Chaque page indique son contexte via <body data-page="...">:
+ * Chaque page indique aussi son contexte via <body data-page="...">:
  *   home | legal | client-auth | client-app | admin-auth | admin-app
  */
 (function () {
   "use strict";
 
   var PAGE = document.body.getAttribute("data-page") || "home";
+  var BASE = document.body.getAttribute("data-base") || "";
   var IS_APP = PAGE === "client-app" || PAGE === "admin-app" || PAGE === "client-auth" || PAGE === "admin-auth";
   var SHOW_FOOTER = !IS_APP;
 
-  var MARK_IMG = '<img class="brand__mark" src="/assets/img/logo/logo-recup-tes-droits.jpg" alt="Récup tes Droits" width="40" height="40">';
+  var MARK_IMG = '<img class="brand__mark" src="' + BASE + 'assets/img/logo/logo-recup-tes-droits.jpg" alt="Récup tes Droits" width="40" height="40">';
 
   function renderBanner(container) {
     var el = document.createElement("div");
@@ -36,7 +38,6 @@
     var header = document.createElement("header");
     header.className = "site-header" + (IS_APP ? " site-header--app" : "");
 
-    var brandHref = IS_APP ? "/index.html" : "/index.html";
     var brandLabel = PAGE === "admin-app" || PAGE === "admin-auth" ? "Espace admin" : (PAGE === "client-app" || PAGE === "client-auth" ? "Espace client" : "");
 
     var inner = document.createElement("div");
@@ -44,7 +45,7 @@
 
     var brand = document.createElement("a");
     brand.className = "brand";
-    brand.href = brandHref;
+    brand.href = BASE + "index.html";
     brand.innerHTML = MARK_IMG +
       '<span class="brand__text"><b>Récup tes Droits</b>' +
       (brandLabel ? "<small>" + brandLabel + "</small>" : "<small>Création d'entreprise &amp; droits ARCE</small>") +
@@ -56,29 +57,29 @@
       nav.className = "site-nav";
       nav.setAttribute("aria-label", "Navigation principale");
       nav.innerHTML =
-        '<a href="/index.html#service">Le service</a>' +
-        '<a href="/index.html#avis">Avis</a>' +
-        '<a href="/index.html#faq">FAQ</a>';
+        '<a href="' + BASE + 'index.html#service">Le service</a>' +
+        '<a href="' + BASE + 'index.html#avis">Avis</a>' +
+        '<a href="' + BASE + 'index.html#faq">FAQ</a>';
       inner.appendChild(nav);
     }
 
     var actions = document.createElement("div");
     actions.className = "site-header__actions";
     if (PAGE === "admin-app" || PAGE === "client-app") {
-      var exitHref = PAGE === "admin-app" ? "/espace-admin/connexion.html" : "/espace-client/connexion.html";
+      var exitHref = PAGE === "admin-app" ? "connexion.html" : "connexion.html";
       if (PAGE === "admin-app" && window.RTD_STORE) {
         var notifCount = window.RTD_STORE.getAdminNotificationCount();
         if (notifCount > 0) {
-          actions.innerHTML += '<a class="app-exit" href="/espace-admin/tableau-de-bord.html">Nouveautés<span class="unread-badge">' + notifCount + "</span></a>";
+          actions.innerHTML += '<a class="app-exit" href="tableau-de-bord.html">Nouveautés<span class="unread-badge">' + notifCount + "</span></a>";
         }
       }
       actions.innerHTML += '<a class="app-exit" id="rtd-exit-link" href="' + exitHref + '">Se déconnecter</a>';
     } else if (PAGE === "admin-auth" || PAGE === "client-auth") {
-      actions.innerHTML = '<a class="app-exit" href="/index.html">Retour au site</a>';
+      actions.innerHTML = '<a class="app-exit" href="' + BASE + 'index.html">Retour au site</a>';
     } else {
       actions.innerHTML =
-        '<a class="btn btn--ghost btn--sm" href="/espace-client/inscription.html">Espace client</a>' +
-        '<a class="btn btn--stamp btn--sm" href="/index.html#rdv">Prendre RDV</a>';
+        '<a class="btn btn--ghost btn--sm" href="' + BASE + 'espace-client/inscription.html">Espace client</a>' +
+        '<a class="btn btn--stamp btn--sm" href="' + BASE + 'index.html#rdv">Prendre RDV</a>';
     }
     inner.appendChild(actions);
 
@@ -109,7 +110,7 @@
       '<div class="wrap">' +
         '<div class="footer__grid">' +
           '<div class="footer__brand">' +
-            '<a class="brand" href="/index.html">' + MARK_IMG +
+            '<a class="brand" href="' + BASE + 'index.html">' + MARK_IMG +
               '<span class="brand__text"><b>Récup tes Droits</b><small>Création d\'entreprise &amp; droits ARCE</small></span>' +
             "</a>" +
             '<p class="footer__tagline">Ton argent dort, réveille-le. Accompagnement complet de la création d\'entreprise au déblocage de l\'ARCE, partout en France.</p>' +
@@ -117,11 +118,11 @@
           '<div>' +
             "<h5>Le service</h5>" +
             '<ul>' +
-              '<li><a href="/index.html#service">Comment ça marche</a></li>' +
-              '<li><a href="/index.html#avis">Avis clients</a></li>' +
-              '<li><a href="/index.html#faq">Questions fréquentes</a></li>' +
-              '<li><a href="/espace-client/inscription.html">Créer mon espace client</a></li>' +
-              '<li><a href="/espace-client/connexion.html">Connexion client</a></li>' +
+              '<li><a href="' + BASE + 'index.html#service">Comment ça marche</a></li>' +
+              '<li><a href="' + BASE + 'index.html#avis">Avis clients</a></li>' +
+              '<li><a href="' + BASE + 'index.html#faq">Questions fréquentes</a></li>' +
+              '<li><a href="' + BASE + 'espace-client/inscription.html">Créer mon espace client</a></li>' +
+              '<li><a href="' + BASE + 'espace-client/connexion.html">Connexion client</a></li>' +
             "</ul>" +
           "</div>" +
           '<div>' +
@@ -136,9 +137,9 @@
         '<div class="footer__bottom">' +
           '<p>&copy; <span id="rtd-year"></span> Récup tes Droits — Auto-entrepreneur. Maquette de démonstration.</p>' +
           '<div style="display:flex; gap:1.25rem; flex-wrap:wrap;">' +
-            '<a href="/mentions-legales.html">Mentions légales</a>' +
-            '<a href="/politique-de-confidentialite.html">Confidentialité</a>' +
-            '<a href="/cgu.html">CGU</a>' +
+            '<a href="' + BASE + 'mentions-legales.html">Mentions légales</a>' +
+            '<a href="' + BASE + 'politique-de-confidentialite.html">Confidentialité</a>' +
+            '<a href="' + BASE + 'cgu.html">CGU</a>' +
           "</div>" +
           '<div class="footer__social">' +
             '<a href="https://www.instagram.com/recuptesdroits/" target="_blank" rel="noopener">Instagram</a>' +

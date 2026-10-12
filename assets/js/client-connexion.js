@@ -7,7 +7,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     if (window.RTD_STORE.getCurrentClient()) {
-      window.location.replace("/espace-client/tableau-de-bord.html");
+      window.location.replace("tableau-de-bord.html");
       return;
     }
 
@@ -26,7 +26,7 @@
 
       window.RTD_STORE.authenticateClient(email, motDePasse).then(function (client) {
         if (client) {
-          window.location.href = "/espace-client/tableau-de-bord.html";
+          window.location.href = "tableau-de-bord.html";
           return;
         }
         submitBtn.disabled = false;

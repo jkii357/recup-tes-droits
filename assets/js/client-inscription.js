@@ -24,7 +24,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     if (window.RTD_STORE.getCurrentClient()) {
-      window.location.replace("/espace-client/tableau-de-bord.html");
+      window.location.replace("tableau-de-bord.html");
       return;
     }
 
@@ -80,7 +80,7 @@
         nom: nom, prenom: prenom, email: email, telephone: telephone,
         dateNaissance: dateNaissance, motDePasse: motDePasse
       }).then(function () {
-        window.location.href = "/espace-client/tableau-de-bord.html";
+        window.location.href = "tableau-de-bord.html";
       });
     });
   });

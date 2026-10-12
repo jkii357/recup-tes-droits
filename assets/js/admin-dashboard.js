@@ -66,7 +66,7 @@
       var chips = ["inpi", "acre", "arce"].map(function (cat) {
         return '<span class="chip chip--' + etapes[cat] + '" title="' + cat.toUpperCase() + '">' + cat.toUpperCase() + "</span>";
       }).join(" ");
-      return "<tr><td><a class=\"client-link\" href=\"/espace-admin/client.html?id=" + encodeURIComponent(c.id) + "\">" +
+      return "<tr><td><a class=\"client-link\" href=\"client.html?id=" + encodeURIComponent(c.id) + "\">" +
         escapeHtml(c.prenom) + " " + escapeHtml(c.nom) +
         (unread ? '<span class="unread-badge">' + unread + "</span>" : "") +
         "</a></td>" +

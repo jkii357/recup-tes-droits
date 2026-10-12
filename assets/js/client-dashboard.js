@@ -162,7 +162,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     var client = window.RTD_STORE.getCurrentClient();
     if (!client) {
-      window.location.replace("/espace-client/connexion.html");
+      window.location.replace("connexion.html");
       return;
     }
     document.getElementById("rtd-client-prenom").textContent = client.prenom;
