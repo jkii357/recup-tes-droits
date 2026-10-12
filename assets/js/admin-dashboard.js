@@ -24,7 +24,7 @@
     }
     table.hidden = false; empty.hidden = true;
     tbody.innerHTML = list.map(function (a) {
-      return "<tr" + (a.vu ? "" : ' style="font-weight:700;"') + "><td>" + escapeHtml(a.date) + (a.vu ? "" : ' <span class="chip chip--en_cours">Nouveau</span>') + "</td>" +
+      return "<tr" + (a.vu ? "" : ' style="font-weight:700;"') + "><td>" + escapeHtml(a.date) + " · " + escapeHtml(a.heure) + (a.vu ? "" : ' <span class="chip chip--en_cours">Nouveau</span>') + "</td>" +
         "<td>" + escapeHtml(a.prenom) + " " + escapeHtml(a.nom) + "</td>" +
         "<td>" + escapeHtml(a.email) + "</td>" +
         "<td>" + escapeHtml(a.telephone) + "</td>" +
@@ -79,12 +79,18 @@
   function renderReviews() {
     var wrap = document.getElementById("rtd-admin-reviews");
     var list = window.RTD_STORE.getReviews();
+    if (list.length === 0) {
+      wrap.innerHTML = '<p class="msg-empty">Aucun avis pour le moment.</p>';
+      return;
+    }
     wrap.innerHTML = list.map(function (r) {
+      var apercu = r.texte ? " — " + escapeHtml(r.texte.slice(0, 60)) + (r.texte.length > 60 ? "…" : "") : "";
       return '<div class="doc-file-row">' +
-        '<span class="doc-file-row__name"><span class="chip" style="background:var(--paper-dim); color:var(--ink-soft);">' + (r.type === "video" ? "Vidéo" : "Texte") + '</span> <span>' + escapeHtml(r.auteur) + " — " + escapeHtml(r.texte.slice(0, 60)) + (r.texte.length > 60 ? "…" : "") + "</span></span>" +
+        '<span class="doc-file-row__name"><span class="chip" style="background:var(--paper-dim); color:var(--ink-soft);">' + (r.type === "video" ? "Vidéo" : "Texte") + '</span> <span>' + escapeHtml(r.auteur) + apercu + "</span></span>" +
         '<span class="doc-file-row__actions">' +
-          '<span class="chip chip--exemple">Exemple</span>' +
+          (r.exemple ? '<span class="chip chip--exemple">Exemple</span>' : "") +
           '<button type="button" class="btn btn--ghost btn--sm" data-toggle-review="' + r.id + '">' + (r.enAvant ? "Retirer de l'accueil" : "Mettre en avant") + "</button>" +
+          '<button type="button" data-remove-review="' + r.id + '">Supprimer</button>' +
         "</span></div>";
     }).join("");
     wrap.querySelectorAll("button[data-toggle-review]").forEach(function (btn) {
@@ -93,6 +99,65 @@
         renderReviews();
       });
     });
+    wrap.querySelectorAll("button[data-remove-review]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        if (window.confirm("Supprimer définitivement cet avis/témoignage ?")) {
+          window.RTD_STORE.removeReview(btn.getAttribute("data-remove-review"));
+          renderReviews();
+        }
+      });
+    });
+  }
+
+  function initReviewForms() {
+    var textForm = document.getElementById("rtd-review-text-form");
+    var textStatus = document.getElementById("rtd-review-text-status");
+    if (textForm) {
+      textForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var auteur = textForm.auteur.value.trim();
+        var texte = textForm.texte.value.trim();
+        if (!auteur || !texte) return;
+        window.RTD_STORE.addReview({ type: "texte", auteur: auteur, note: parseInt(textForm.note.value, 10), texte: texte });
+        textForm.reset();
+        textStatus.textContent = "Avis ajouté et mis en avant sur l'accueil.";
+        textStatus.className = "form-status form-status--ok is-visible";
+        renderReviews();
+      });
+    }
+
+    var videoForm = document.getElementById("rtd-review-video-form");
+    var videoStatus = document.getElementById("rtd-review-video-status");
+    var videoFileInput = videoForm ? videoForm.querySelector('input[type="file"]') : null;
+    var videoFilenameEl = document.getElementById("rtd-review-video-filename");
+    if (videoFileInput) {
+      videoFileInput.addEventListener("change", function () {
+        var f = videoFileInput.files && videoFileInput.files[0];
+        videoFilenameEl.textContent = f ? f.name : "Aucun fichier choisi";
+      });
+    }
+    if (videoForm) {
+      videoForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var auteur = videoForm.auteur.value.trim();
+        var file = videoFileInput.files && videoFileInput.files[0];
+        if (!auteur || !file) return;
+        var submitBtn = videoForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        videoStatus.textContent = "Envoi en cours...";
+        videoStatus.className = "form-status is-visible";
+
+        var review = window.RTD_STORE.addReview({ type: "video", auteur: auteur });
+        window.RTD_FILES.put(review.id, file).then(function () {
+          submitBtn.disabled = false;
+          videoForm.reset();
+          videoFilenameEl.textContent = "Aucun fichier choisi";
+          videoStatus.textContent = "Vidéo ajoutée et mise en avant sur l'accueil.";
+          videoStatus.className = "form-status form-status--ok is-visible";
+          renderReviews();
+        });
+      });
+    }
   }
 
   function renderAll() {
@@ -104,6 +169,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     renderAll();
+    initReviewForms();
     window.RTD_STORE.markAppointmentsSeen();
 
     var resetBtn = document.getElementById("rtd-admin-reset");

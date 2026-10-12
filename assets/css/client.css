@@ -4,7 +4,7 @@
    ========================================================================== */
 
 body[data-page="client-auth"],
-body[data-page="client-app"] { background: var(--navy); }
+body[data-page="client-app"] { background: var(--navy-gradient); }
 
 .app-shell { padding: var(--space-6) 0 var(--space-8); min-height: 60vh; }
 .app-shell .wrap { color: var(--on-navy); }

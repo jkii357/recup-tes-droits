@@ -125,6 +125,7 @@
       window.RTD_STORE.addMessage(client.id, "admin", text);
       form.message.value = "";
       renderMessages(client);
+      if (window.RTD_NOTIFY_CLIENT) window.RTD_NOTIFY_CLIENT(client, text);
     });
   }
 

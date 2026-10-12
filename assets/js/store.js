@@ -23,7 +23,7 @@
     REVIEWS: "rtd_reviews",
     CLIENT_SESSION: "rtd_client_session"
   };
-  var SCHEMA_VERSION = 2;
+  var SCHEMA_VERSION = 3;
 
   var DOCUMENT_TYPES = [
     { id: "piece_identite", label: "Pièce d'identité", hint: "Carte d'identité, passeport, ou titre de séjour en cours de validité" },
@@ -144,6 +144,7 @@
       email: data.email,
       telephone: data.telephone,
       date: data.date,
+      heure: data.heure,
       vu: false,
       creeLe: new Date().toISOString()
     };
@@ -157,10 +158,13 @@
     return readList(KEYS.APPOINTMENTS);
   }
 
-  /** Dates déjà réservées (à partir d'aujourd'hui) — pour exclure ces jours du widget de RDV. */
-  function getBookedDates() {
+  /** Couples date+heure déjà réservés (à partir d'aujourd'hui) — pour exclure précisément
+      ce créneau du widget de RDV, sans bloquer les autres heures du même jour. */
+  function getBookedSlots() {
     var today = todayIso();
-    return getAppointments().filter(function (a) { return a.date >= today; }).map(function (a) { return a.date; });
+    return getAppointments()
+      .filter(function (a) { return a.date >= today; })
+      .map(function (a) { return a.date + "|" + a.heure; });
   }
 
   function countPendingAppointments() {
@@ -344,6 +348,32 @@
     return null;
   }
 
+  /** Ajoute un vrai avis (texte) ou témoignage (vidéo), déposé depuis l'espace admin.
+      data.type: "texte" | "video". Pour une vidéo, le fichier est stocké à part dans
+      RTD_FILES (IndexedDB), avec l'id du avis lui-même comme clé — voir admin-dashboard.js. */
+  function addReview(data) {
+    var record = {
+      id: uid(),
+      type: data.type,
+      auteur: data.auteur,
+      note: data.note || 5,
+      texte: data.texte || "",
+      exemple: false,
+      enAvant: true,
+      creeLe: new Date().toISOString()
+    };
+    var list = readList(KEYS.REVIEWS);
+    list.unshift(record);
+    writeList(KEYS.REVIEWS, list);
+    return record;
+  }
+
+  function removeReview(id) {
+    var list = readList(KEYS.REVIEWS).filter(function (r) { return r.id !== id; });
+    writeList(KEYS.REVIEWS, list);
+    if (global.RTD_FILES) global.RTD_FILES.remove(id);
+  }
+
   /** Nombre total de nouveautés pour l'admin : RDV, documents et messages non encore traités. */
   function getAdminNotificationCount() {
     return countPendingAppointments() + countPendingDocumentsTotal() + countUnreadMessagesTotal();
@@ -367,7 +397,7 @@
     todayIso: todayIso,
     addAppointment: addAppointment,
     getAppointments: getAppointments,
-    getBookedDates: getBookedDates,
+    getBookedSlots: getBookedSlots,
     countPendingAppointments: countPendingAppointments,
     markAppointmentsSeen: markAppointmentsSeen,
     addClient: addClient,
@@ -391,6 +421,8 @@
     removeDocument: removeDocument,
     getReviews: getReviews,
     toggleReviewFeatured: toggleReviewFeatured,
+    addReview: addReview,
+    removeReview: removeReview,
     getAdminNotificationCount: getAdminNotificationCount,
     resetDemoData: resetDemoData
   };

@@ -14,6 +14,7 @@
 </head>
 <body data-page="home">
 <script src="assets/js/store.js"></script>
+<script src="assets/js/files-db.js"></script>
 <script src="assets/js/chrome.js"></script>
 <script src="assets/js/booking.js" defer></script>
 <script src="assets/js/reviews.js" defer></script>
@@ -162,13 +163,18 @@
 
       <div class="notice booking-notice" id="rtd-booking">
         <div id="rtd-booking-steps">
-          <h3>Choisis une date</h3>
-          <p class="booking-notice__lede">15 minutes pour faire le point sur ta situation et vérifier ton éligibilité à l'ARCE. Je te rappelle au numéro indiqué ci-dessous pour fixer l'heure.</p>
+          <h3>Choisis un créneau</h3>
+          <p class="booking-notice__lede">15 minutes pour faire le point sur ta situation et vérifier ton éligibilité à l'ARCE. Disponible du lundi au samedi, 9h-19h.</p>
           <p class="booking-notice__today" id="rtd-booking-today"></p>
 
           <div class="rtd-booking-block">
             <span class="label">Date</span>
             <div class="rtd-slot-row" id="rtd-booking-dates"></div>
+          </div>
+
+          <div class="rtd-booking-block" id="rtd-booking-slot-wrap" hidden>
+            <span class="label">Heure</span>
+            <div class="rtd-slot-row rtd-slot-row--times" id="rtd-booking-slots"></div>
           </div>
 
           <div class="rtd-booking-block" id="rtd-booking-form-step" hidden>

@@ -17,6 +17,7 @@
 <body data-page="admin-app" data-base="../">
 <script src="../assets/js/admin-auth.js"></script>
 <script src="../assets/js/store.js"></script>
+<script src="../assets/js/files-db.js"></script>
 <script src="../assets/js/chrome.js"></script>
 <script src="../assets/js/admin-dashboard.js" defer></script>
 
@@ -37,7 +38,7 @@
         <p class="app-card__note">Soumis via le widget de prise de RDV sur la page d'accueil.</p>
         <div class="table-scroll">
           <table class="data-table" id="rtd-admin-rdv-table" hidden>
-            <thead><tr><th>Date</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Reçu le</th></tr></thead>
+            <thead><tr><th>Date &amp; heure</th><th>Nom</th><th>Email</th><th>Téléphone</th><th>Reçu le</th></tr></thead>
             <tbody id="rtd-admin-rdv-body"></tbody>
           </table>
         </div>
@@ -64,7 +65,32 @@
 
       <div class="app-card">
         <div class="admin-grid-head"><h2>Avis &amp; témoignages affichés</h2></div>
-        <p class="app-card__note">Choisis les avis mis en avant sur la page d'accueil.</p>
+        <p class="app-card__note">Ajoute tes propres avis et vidéos ci-dessous, puis choisis ceux mis en avant sur l'accueil.</p>
+
+        <div class="review-add-grid">
+          <form id="rtd-review-text-form" class="review-add-form">
+            <span class="label">Ajouter un avis</span>
+            <div id="rtd-review-text-status" class="form-status"></div>
+            <input type="text" name="auteur" placeholder="Nom du client" required>
+            <select name="note">
+              <option value="5">★★★★★ (5 étoiles)</option>
+              <option value="4">★★★★☆ (4 étoiles)</option>
+              <option value="3">★★★☆☆ (3 étoiles)</option>
+            </select>
+            <textarea name="texte" rows="3" placeholder="Texte de l'avis" required></textarea>
+            <button type="submit" class="btn btn--on-paper btn--sm">Ajouter l'avis</button>
+          </form>
+
+          <form id="rtd-review-video-form" class="review-add-form">
+            <span class="label">Ajouter un témoignage vidéo</span>
+            <div id="rtd-review-video-status" class="form-status"></div>
+            <input type="text" name="auteur" placeholder="Nom du client" required>
+            <label class="file-input-label">Choisir une vidéo<input type="file" name="video" accept="video/*" required></label>
+            <span class="review-add-form__filename" id="rtd-review-video-filename">Aucun fichier choisi</span>
+            <button type="submit" class="btn btn--on-paper btn--sm">Ajouter la vidéo</button>
+          </form>
+        </div>
+
         <div id="rtd-admin-reviews"></div>
       </div>
 

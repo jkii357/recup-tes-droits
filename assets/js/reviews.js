@@ -1,6 +1,8 @@
 /*
  * reviews.js — rendu des avis et témoignages vidéo sur la page d'accueil,
- * à partir de ce que l'admin a mis en avant (voir espace-admin).
+ * à partir de ce que l'admin a ajouté/mis en avant (voir espace-admin).
+ * Les vraies vidéos déposées par l'admin (RTD_FILES) sont lues directement ;
+ * les avis/témoignages d'exemple restent étiquetés comme tels.
  */
 (function () {
   "use strict";
@@ -9,6 +11,12 @@
     var out = "";
     for (var i = 0; i < 5; i++) out += i < note ? "★" : "☆";
     return out;
+  }
+
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
   }
 
   function renderTextReviews(container, reviews) {
@@ -23,7 +31,7 @@
       card.innerHTML =
         '<div class="rtd-review-card__top">' +
           '<span class="rtd-stars" aria-hidden="true">' + starRow(r.note) + "</span>" +
-          '<span class="chip chip--exemple">Avis exemple</span>' +
+          (r.exemple ? '<span class="chip chip--exemple">Avis exemple</span>' : "") +
         "</div>" +
         '<p class="rtd-review-card__text">' + escapeHtml(r.texte) + "</p>" +
         '<p class="rtd-review-card__author">' + escapeHtml(r.auteur) + "</p>";
@@ -36,20 +44,30 @@
     reviews.forEach(function (r) {
       var card = document.createElement("article");
       card.className = "rtd-video-card";
-      card.innerHTML =
-        '<div class="rtd-video-card__poster" aria-hidden="true">' +
-          '<span class="rtd-video-card__play">▶</span>' +
-        "</div>" +
-        '<p class="rtd-video-card__caption">Exemple — vidéo à venir</p>' +
-        '<p class="rtd-video-card__author">' + escapeHtml(r.auteur) + "</p>";
+
+      if (!r.exemple && window.RTD_FILES) {
+        card.innerHTML =
+          '<div class="rtd-video-card__poster" aria-hidden="true"><span class="rtd-video-card__play">▶</span></div>' +
+          '<p class="rtd-video-card__author">' + escapeHtml(r.auteur) + "</p>";
+        window.RTD_FILES.get(r.id).then(function (blob) {
+          if (!blob) return;
+          var url = URL.createObjectURL(blob);
+          var video = document.createElement("video");
+          video.className = "rtd-video-card__video";
+          video.controls = true;
+          video.preload = "metadata";
+          video.src = url;
+          var poster = card.querySelector(".rtd-video-card__poster");
+          if (poster) poster.replaceWith(video);
+        });
+      } else {
+        card.innerHTML =
+          '<div class="rtd-video-card__poster" aria-hidden="true"><span class="rtd-video-card__play">▶</span></div>' +
+          '<p class="rtd-video-card__caption">Exemple — vidéo à venir</p>' +
+          '<p class="rtd-video-card__author">' + escapeHtml(r.auteur) + "</p>";
+      }
       container.appendChild(card);
     });
-  }
-
-  function escapeHtml(s) {
-    var div = document.createElement("div");
-    div.textContent = s;
-    return div.innerHTML;
   }
 
   function init() {
