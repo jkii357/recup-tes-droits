@@ -1,29 +1,33 @@
 /*
- * store.js — couche de données de la maquette.
+ * store.js — couche de données de la maquette, sur Cloud Firestore.
  *
- * DÉMO UNIQUEMENT : tout est stocké dans le localStorage du navigateur.
- * Aucun vrai serveur. En production, ce fichier est remplacé par de vrais
- * appels à une API. Les mots de passe sont hashés (SHA-256) avant stockage
- * via SubtleCrypto — plus sérieux qu'un mot de passe en clair, mais ça
- * reste un hash sans sel stocké côté client : pas une vraie sécurité.
+ * Les données (RDV, clients, messages, documents, avis) sont partagées entre
+ * tous les appareils via le projet Firebase "Recup Tes Droits" — voir
+ * firebase-config.js, chargé juste avant ce fichier. Toutes les fonctions de
+ * lecture/écriture renvoient donc des Promises.
  *
- * Nécessite que le site soit servi via http(s):// — ouvert en file://,
- * chaque page peut se voir attribuer une origine différente et le
- * localStorage ne serait plus partagé entre les pages.
+ * Les fichiers déposés (documents, vidéos de témoignage) restent eux
+ * stockés localement dans le navigateur de la personne qui les dépose (voir
+ * files-db.js) : seules leurs métadonnées (nom, taille, statut) sont
+ * partagées. Faire aussi voyager les fichiers eux-mêmes demanderait Firebase
+ * Storage, pas fait ici.
+ *
+ * Sécurité : les règles Firestore de ce projet sont volontairement ouvertes
+ * (pas d'authentification Firebase réelle — l'admin et les clients
+ * s'identifient toujours côté client, comme avant). Voir le commentaire en
+ * tête des règles, dans la console Firebase. DÉMO UNIQUEMENT.
  */
 (function (global) {
   "use strict";
 
-  var KEYS = {
-    SCHEMA_VERSION: "rtd_schema_version",
-    APPOINTMENTS: "rtd_appointments",
-    CLIENTS: "rtd_clients",
-    MESSAGES: "rtd_messages",
-    DOCUMENTS: "rtd_documents",
-    REVIEWS: "rtd_reviews",
-    CLIENT_SESSION: "rtd_client_session"
+  var COL = {
+    APPOINTMENTS: "appointments",
+    CLIENTS: "clients",
+    MESSAGES: "messages",
+    DOCUMENTS: "documents",
+    REVIEWS: "reviews"
   };
-  var SCHEMA_VERSION = 3;
+  var CLIENT_SESSION_KEY = "rtd_client_session";
 
   var DOCUMENT_TYPES = [
     { id: "piece_identite", label: "Pièce d'identité", hint: "Carte d'identité, passeport, ou titre de séjour en cours de validité" },
@@ -31,25 +35,24 @@
     { id: "admission_are", label: "Admission ou reprise ARE", hint: "Disponible dans l'onglet « Courrier » de ton espace France Travail" }
   ];
 
+  function db() { return global.RTD_DB; }
+
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  function readList(key) {
-    try {
-      var raw = global.localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
+  function sortByCreeLe(list, dir) {
+    list.sort(function (a, b) {
+      var av = a.creeLe || "", bv = b.creeLe || "";
+      return dir === "asc" ? (av < bv ? -1 : av > bv ? 1 : 0) : (av > bv ? -1 : av < bv ? 1 : 0);
+    });
+    return list;
   }
 
-  function writeList(key, list) {
-    try {
-      global.localStorage.setItem(key, JSON.stringify(list));
-    } catch (e) {
-      /* quota ou navigateur en mode privé : la démo continue, juste sans persistance */
-    }
+  function snapToList(snap) {
+    var out = [];
+    snap.forEach(function (doc) { out.push(doc.data()); });
+    return out;
   }
 
   function hashPassword(password) {
@@ -117,24 +120,23 @@
   ];
 
   function init() {
-    var currentVersion = parseInt(global.localStorage.getItem(KEYS.SCHEMA_VERSION) || "0", 10);
-    if (currentVersion !== SCHEMA_VERSION) {
-      /* Changement de schéma (mot de passe client, RDV sans horaire fixe...) : on repart propre
-         sur les données de démo plutôt que de migrer d'anciens enregistrements incompatibles. */
-      [KEYS.APPOINTMENTS, KEYS.CLIENTS, KEYS.MESSAGES, KEYS.DOCUMENTS, KEYS.CLIENT_SESSION].forEach(function (k) {
-        try { global.localStorage.removeItem(k); } catch (e) {}
-      });
-      global.localStorage.setItem(KEYS.SCHEMA_VERSION, String(SCHEMA_VERSION));
-    }
-    if (readList(KEYS.REVIEWS).length === 0) {
-      writeList(KEYS.REVIEWS, EXAMPLE_REVIEWS);
-    }
+    db().collection(COL.REVIEWS).limit(1).get().then(function (snap) {
+      if (snap.empty) {
+        var batch = db().batch();
+        EXAMPLE_REVIEWS.forEach(function (r) {
+          batch.set(db().collection(COL.REVIEWS).doc(r.id), r);
+        });
+        return batch.commit();
+      }
+    }).catch(function (e) { console.error("Initialisation des avis d'exemple échouée :", e); });
   }
 
   function todayIso() {
     var d = new Date();
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
+
+  /* ----------------------------- RDV ----------------------------- */
 
   function addAppointment(data) {
     var record = {
@@ -148,35 +150,45 @@
       vu: false,
       creeLe: new Date().toISOString()
     };
-    var list = readList(KEYS.APPOINTMENTS);
-    list.unshift(record);
-    writeList(KEYS.APPOINTMENTS, list);
-    return record;
+    return db().collection(COL.APPOINTMENTS).doc(record.id).set(record).then(function () { return record; });
   }
 
   function getAppointments() {
-    return readList(KEYS.APPOINTMENTS);
+    return db().collection(COL.APPOINTMENTS).orderBy("creeLe", "desc").get().then(snapToList);
   }
 
   /** Couples date+heure déjà réservés (à partir d'aujourd'hui) — pour exclure précisément
       ce créneau du widget de RDV, sans bloquer les autres heures du même jour. */
   function getBookedSlots() {
     var today = todayIso();
-    return getAppointments()
-      .filter(function (a) { return a.date >= today; })
-      .map(function (a) { return a.date + "|" + a.heure; });
+    return db().collection(COL.APPOINTMENTS).where("date", ">=", today).get().then(function (snap) {
+      return snapToList(snap).map(function (a) { return a.date + "|" + a.heure; });
+    });
   }
 
   function countPendingAppointments() {
-    return getAppointments().filter(function (a) { return !a.vu; }).length;
+    return db().collection(COL.APPOINTMENTS).where("vu", "==", false).get().then(function (snap) { return snap.size; });
   }
 
   function markAppointmentsSeen() {
-    var list = readList(KEYS.APPOINTMENTS);
-    var changed = false;
-    list.forEach(function (a) { if (!a.vu) { a.vu = true; changed = true; } });
-    if (changed) writeList(KEYS.APPOINTMENTS, list);
+    return db().collection(COL.APPOINTMENTS).where("vu", "==", false).get().then(function (snap) {
+      if (snap.empty) return;
+      var batch = db().batch();
+      snap.forEach(function (doc) { batch.update(doc.ref, { vu: true }); });
+      return batch.commit();
+    });
   }
+
+  /** Abonnement temps réel aux RDV — pour rafraîchir le widget de prise de RDV
+      (ou la liste admin) dès qu'une réservation est faite, même depuis un autre
+      appareil. Renvoie une fonction de désabonnement. */
+  function watchAppointments(callback) {
+    return db().collection(COL.APPOINTMENTS).onSnapshot(function (snap) {
+      callback(sortByCreeLe(snapToList(snap), "desc"));
+    }, function (e) { console.error("Suivi des RDV échoué :", e); });
+  }
+
+  /* --------------------------- Clients --------------------------- */
 
   function addClient(data) {
     return hashPassword(data.motDePasse).then(function (passwordHash) {
@@ -186,79 +198,106 @@
         prenom: data.prenom,
         email: data.email,
         telephone: data.telephone,
+        codePostal: data.codePostal,
         dateNaissance: data.dateNaissance,
         passwordHash: passwordHash,
         creeLe: new Date().toISOString(),
         etapes: { inpi: "attente", acre: "attente", arce: "attente" }
       };
-      var list = readList(KEYS.CLIENTS);
-      list.unshift(record);
-      writeList(KEYS.CLIENTS, list);
-      setCurrentClientId(record.id);
-      return record;
+      return db().collection(COL.CLIENTS).doc(record.id).set(record).then(function () {
+        setCurrentClientId(record.id, true);
+        return record;
+      });
     });
   }
 
   function getClients() {
-    return readList(KEYS.CLIENTS);
+    return db().collection(COL.CLIENTS).orderBy("creeLe", "desc").get().then(snapToList);
+  }
+
+  /** Abonnement temps réel à la liste des clients — l'admin voit apparaître
+      un nouveau client dès son inscription, même depuis un autre appareil. */
+  function watchClients(callback) {
+    return db().collection(COL.CLIENTS).onSnapshot(function (snap) {
+      callback(sortByCreeLe(snapToList(snap), "desc"));
+    }, function (e) { console.error("Suivi des clients échoué :", e); });
   }
 
   function getClient(id) {
-    var list = readList(KEYS.CLIENTS);
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === id) return list[i];
-    }
-    return null;
+    if (!id) return Promise.resolve(null);
+    return db().collection(COL.CLIENTS).doc(id).get().then(function (doc) {
+      return doc.exists ? doc.data() : null;
+    });
   }
 
   function findClientByEmail(email) {
-    var list = readList(KEYS.CLIENTS);
     var needle = (email || "").trim().toLowerCase();
-    for (var i = 0; i < list.length; i++) {
-      if ((list[i].email || "").trim().toLowerCase() === needle) return list[i];
-    }
-    return null;
+    if (!needle) return Promise.resolve(null);
+    return db().collection(COL.CLIENTS).get().then(function (snap) {
+      var found = null;
+      snap.forEach(function (doc) {
+        var c = doc.data();
+        if (!found && (c.email || "").trim().toLowerCase() === needle) found = c;
+      });
+      return found;
+    });
   }
 
-  /** Vérifie email + mot de passe. Résout le client (et ouvre sa session) ou null. */
-  function authenticateClient(email, password) {
-    var client = findClientByEmail(email);
-    if (!client) return Promise.resolve(null);
-    return hashPassword(password).then(function (hash) {
-      if (hash === client.passwordHash) {
-        setCurrentClientId(client.id);
-        return client;
-      }
-      return null;
+  /** Vérifie email + mot de passe. Résout le client (et ouvre sa session) ou null.
+      remember (def. true) : session en localStorage (survit à la fermeture du
+      navigateur) si true, en sessionStorage (effacée à la fermeture de l'onglet)
+      si false — pour l'option "Se souvenir de moi" de l'écran de connexion. */
+  function authenticateClient(email, password, remember) {
+    return findClientByEmail(email).then(function (client) {
+      if (!client) return null;
+      return hashPassword(password).then(function (hash) {
+        if (hash === client.passwordHash) {
+          setCurrentClientId(client.id, remember !== false);
+          return client;
+        }
+        return null;
+      });
     });
   }
 
   function updateClientEtape(clientId, categorie, valeur) {
-    var list = readList(KEYS.CLIENTS);
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === clientId) {
-        list[i].etapes = list[i].etapes || { inpi: "attente", acre: "attente", arce: "attente" };
-        list[i].etapes[categorie] = valeur;
-        writeList(KEYS.CLIENTS, list);
-        return list[i];
-      }
-    }
-    return null;
+    var patch = {};
+    patch["etapes." + categorie] = valeur;
+    return db().collection(COL.CLIENTS).doc(clientId).update(patch);
   }
 
-  function setCurrentClientId(id) {
-    try { global.localStorage.setItem(KEYS.CLIENT_SESSION, id); } catch (e) {}
+  /* remember=true (défaut) : session durable (localStorage). remember=false :
+     session effacée à la fermeture de l'onglet (sessionStorage) — pour les
+     postes partagés, quand "Se souvenir de moi" est décoché. Cette session
+     reste locale à l'appareil : seule l'identité "qui est connecté ici"
+     reste locale, les données du client, elles, viennent de Firestore. */
+  function setCurrentClientId(id, remember) {
+    try {
+      if (remember === false) {
+        global.sessionStorage.setItem(CLIENT_SESSION_KEY, id);
+        global.localStorage.removeItem(CLIENT_SESSION_KEY);
+      } else {
+        global.localStorage.setItem(CLIENT_SESSION_KEY, id);
+        global.sessionStorage.removeItem(CLIENT_SESSION_KEY);
+      }
+    } catch (e) {}
   }
   function getCurrentClientId() {
-    try { return global.localStorage.getItem(KEYS.CLIENT_SESSION); } catch (e) { return null; }
+    try {
+      return global.localStorage.getItem(CLIENT_SESSION_KEY) || global.sessionStorage.getItem(CLIENT_SESSION_KEY);
+    } catch (e) { return null; }
   }
   function getCurrentClient() {
-    var id = getCurrentClientId();
-    return id ? getClient(id) : null;
+    return getClient(getCurrentClientId());
   }
   function clearCurrentClient() {
-    try { global.localStorage.removeItem(KEYS.CLIENT_SESSION); } catch (e) {}
+    try {
+      global.localStorage.removeItem(CLIENT_SESSION_KEY);
+      global.sessionStorage.removeItem(CLIENT_SESSION_KEY);
+    } catch (e) {}
   }
+
+  /* --------------------------- Messages --------------------------- */
 
   function addMessage(clientId, auteur, texte) {
     var record = {
@@ -269,32 +308,48 @@
       creeLe: new Date().toISOString(),
       lu: auteur === "admin"
     };
-    var list = readList(KEYS.MESSAGES);
-    list.push(record);
-    writeList(KEYS.MESSAGES, list);
-    return record;
+    return db().collection(COL.MESSAGES).doc(record.id).set(record).then(function () { return record; });
   }
 
   function getMessages(clientId) {
-    return readList(KEYS.MESSAGES).filter(function (m) { return m.clientId === clientId; });
+    return db().collection(COL.MESSAGES).where("clientId", "==", clientId).get().then(function (snap) {
+      return sortByCreeLe(snapToList(snap), "asc");
+    });
   }
 
   function countUnreadMessages(clientId) {
-    return getMessages(clientId).filter(function (m) { return m.auteur === "client" && !m.lu; }).length;
+    return db().collection(COL.MESSAGES).where("clientId", "==", clientId).get().then(function (snap) {
+      return snapToList(snap).filter(function (m) { return m.auteur === "client" && !m.lu; }).length;
+    });
   }
 
   function countUnreadMessagesTotal() {
-    return readList(KEYS.MESSAGES).filter(function (m) { return m.auteur === "client" && !m.lu; }).length;
+    return db().collection(COL.MESSAGES).where("auteur", "==", "client").get().then(function (snap) {
+      return snapToList(snap).filter(function (m) { return !m.lu; }).length;
+    });
   }
 
   function markMessagesRead(clientId) {
-    var list = readList(KEYS.MESSAGES);
-    var changed = false;
-    list.forEach(function (m) {
-      if (m.clientId === clientId && m.auteur === "client" && !m.lu) { m.lu = true; changed = true; }
+    return db().collection(COL.MESSAGES).where("clientId", "==", clientId).get().then(function (snap) {
+      var batch = db().batch();
+      var changed = false;
+      snap.forEach(function (doc) {
+        var m = doc.data();
+        if (m.auteur === "client" && !m.lu) { batch.update(doc.ref, { lu: true }); changed = true; }
+      });
+      return changed ? batch.commit() : null;
     });
-    if (changed) writeList(KEYS.MESSAGES, list);
   }
+
+  /** Abonnement temps réel au fil de messages d'un client — pour un effet
+      messagerie en direct côté admin comme côté client. */
+  function watchMessages(clientId, callback) {
+    return db().collection(COL.MESSAGES).where("clientId", "==", clientId).onSnapshot(function (snap) {
+      callback(sortByCreeLe(snapToList(snap), "asc"));
+    }, function (e) { console.error("Suivi des messages échoué :", e); });
+  }
+
+  /* --------------------------- Documents --------------------------- */
 
   function addDocumentMeta(clientId, type, fichier) {
     var record = {
@@ -306,51 +361,49 @@
       statut: "en_attente",
       creeLe: new Date().toISOString()
     };
-    var list = readList(KEYS.DOCUMENTS);
-    list.push(record);
-    writeList(KEYS.DOCUMENTS, list);
-    return record;
+    return db().collection(COL.DOCUMENTS).doc(record.id).set(record).then(function () { return record; });
   }
 
   function getDocuments(clientId) {
-    return readList(KEYS.DOCUMENTS).filter(function (d) { return d.clientId === clientId; });
+    return db().collection(COL.DOCUMENTS).where("clientId", "==", clientId).get().then(function (snap) {
+      return sortByCreeLe(snapToList(snap), "asc");
+    });
   }
 
   /** Documents fraîchement déposés, pas encore vérifiés par l'admin — tous clients confondus. */
   function countPendingDocumentsTotal() {
-    return readList(KEYS.DOCUMENTS).filter(function (d) { return d.statut === "en_attente"; }).length;
+    return db().collection(COL.DOCUMENTS).where("statut", "==", "en_attente").get().then(function (snap) { return snap.size; });
   }
 
   function updateDocumentStatus(docId, statut) {
-    var list = readList(KEYS.DOCUMENTS);
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === docId) { list[i].statut = statut; writeList(KEYS.DOCUMENTS, list); return list[i]; }
-    }
-    return null;
+    return db().collection(COL.DOCUMENTS).doc(docId).update({ statut: statut });
   }
 
   function removeDocument(docId) {
-    var list = readList(KEYS.DOCUMENTS).filter(function (d) { return d.id !== docId; });
-    writeList(KEYS.DOCUMENTS, list);
+    return db().collection(COL.DOCUMENTS).doc(docId).delete();
   }
 
+  /* --------------------------- Avis --------------------------- */
+
   function getReviews(opts) {
-    var list = readList(KEYS.REVIEWS);
-    if (opts && opts.onlyFeatured) list = list.filter(function (r) { return r.enAvant; });
-    return list;
+    return db().collection(COL.REVIEWS).orderBy("creeLe", "desc").get().then(function (snap) {
+      var list = snapToList(snap);
+      if (opts && opts.onlyFeatured) list = list.filter(function (r) { return r.enAvant; });
+      return list;
+    });
   }
 
   function toggleReviewFeatured(id) {
-    var list = readList(KEYS.REVIEWS);
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === id) { list[i].enAvant = !list[i].enAvant; writeList(KEYS.REVIEWS, list); return list[i]; }
-    }
-    return null;
+    return db().collection(COL.REVIEWS).doc(id).get().then(function (doc) {
+      if (!doc.exists) return null;
+      var enAvant = !doc.data().enAvant;
+      return doc.ref.update({ enAvant: enAvant }).then(function () { return enAvant; });
+    });
   }
 
   /** Ajoute un vrai avis (texte) ou témoignage (vidéo), déposé depuis l'espace admin.
       data.type: "texte" | "video". Pour une vidéo, le fichier est stocké à part dans
-      RTD_FILES (IndexedDB), avec l'id du avis lui-même comme clé — voir admin-dashboard.js. */
+      RTD_FILES (IndexedDB, local à cet appareil), avec l'id du avis lui-même comme clé. */
   function addReview(data) {
     var record = {
       id: uid(),
@@ -362,36 +415,49 @@
       enAvant: true,
       creeLe: new Date().toISOString()
     };
-    var list = readList(KEYS.REVIEWS);
-    list.unshift(record);
-    writeList(KEYS.REVIEWS, list);
-    return record;
+    return db().collection(COL.REVIEWS).doc(record.id).set(record).then(function () { return record; });
   }
 
   function removeReview(id) {
-    var list = readList(KEYS.REVIEWS).filter(function (r) { return r.id !== id; });
-    writeList(KEYS.REVIEWS, list);
-    if (global.RTD_FILES) global.RTD_FILES.remove(id);
+    return db().collection(COL.REVIEWS).doc(id).delete().then(function () {
+      if (global.RTD_FILES) global.RTD_FILES.remove(id);
+    });
   }
+
+  /* --------------------------- Divers --------------------------- */
 
   /** Nombre total de nouveautés pour l'admin : RDV, documents et messages non encore traités. */
   function getAdminNotificationCount() {
-    return countPendingAppointments() + countPendingDocumentsTotal() + countUnreadMessagesTotal();
+    return Promise.all([countPendingAppointments(), countPendingDocumentsTotal(), countUnreadMessagesTotal()])
+      .then(function (vals) { return vals[0] + vals[1] + vals[2]; });
+  }
+
+  function deleteAllInCollection(name) {
+    return db().collection(name).get().then(function (snap) {
+      if (snap.empty) return;
+      var batch = db().batch();
+      snap.forEach(function (doc) { batch.delete(doc.ref); });
+      return batch.commit();
+    });
   }
 
   function resetDemoData() {
-    [KEYS.APPOINTMENTS, KEYS.CLIENTS, KEYS.MESSAGES, KEYS.DOCUMENTS].forEach(function (k) {
-      try { global.localStorage.removeItem(k); } catch (e) {}
+    return Promise.all([
+      deleteAllInCollection(COL.APPOINTMENTS),
+      deleteAllInCollection(COL.CLIENTS),
+      deleteAllInCollection(COL.MESSAGES),
+      deleteAllInCollection(COL.DOCUMENTS),
+      deleteAllInCollection(COL.REVIEWS)
+    ]).then(function () {
+      clearCurrentClient();
+      if (global.RTD_FILES && typeof global.RTD_FILES.clear === "function") global.RTD_FILES.clear();
+      var batch = db().batch();
+      EXAMPLE_REVIEWS.forEach(function (r) { batch.set(db().collection(COL.REVIEWS).doc(r.id), r); });
+      return batch.commit();
     });
-    writeList(KEYS.REVIEWS, EXAMPLE_REVIEWS);
-    clearCurrentClient();
-    if (global.RTD_FILES && typeof global.RTD_FILES.clear === "function") {
-      global.RTD_FILES.clear();
-    }
   }
 
   global.RTD_STORE = {
-    KEYS: KEYS,
     DOCUMENT_TYPES: DOCUMENT_TYPES,
     init: init,
     todayIso: todayIso,
@@ -400,8 +466,10 @@
     getBookedSlots: getBookedSlots,
     countPendingAppointments: countPendingAppointments,
     markAppointmentsSeen: markAppointmentsSeen,
+    watchAppointments: watchAppointments,
     addClient: addClient,
     getClients: getClients,
+    watchClients: watchClients,
     getClient: getClient,
     findClientByEmail: findClientByEmail,
     authenticateClient: authenticateClient,
@@ -414,6 +482,7 @@
     countUnreadMessages: countUnreadMessages,
     countUnreadMessagesTotal: countUnreadMessagesTotal,
     markMessagesRead: markMessagesRead,
+    watchMessages: watchMessages,
     addDocumentMeta: addDocumentMeta,
     getDocuments: getDocuments,
     countPendingDocumentsTotal: countPendingDocumentsTotal,

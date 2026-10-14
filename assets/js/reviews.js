@@ -75,9 +75,10 @@
     var videoWrap = document.getElementById("rtd-reviews-video");
     if (!textWrap && !videoWrap) return;
 
-    var featured = window.RTD_STORE.getReviews({ onlyFeatured: true });
-    if (textWrap) renderTextReviews(textWrap, featured.filter(function (r) { return r.type === "texte"; }));
-    if (videoWrap) renderVideoReviews(videoWrap, featured.filter(function (r) { return r.type === "video"; }));
+    window.RTD_STORE.getReviews({ onlyFeatured: true }).then(function (featured) {
+      if (textWrap) renderTextReviews(textWrap, featured.filter(function (r) { return r.type === "texte"; }));
+      if (videoWrap) renderVideoReviews(videoWrap, featured.filter(function (r) { return r.type === "video"; }));
+    });
   }
 
   document.addEventListener("DOMContentLoaded", init);

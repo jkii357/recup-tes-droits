@@ -67,19 +67,20 @@
     actions.className = "site-header__actions";
     if (PAGE === "admin-app" || PAGE === "client-app") {
       var exitHref = PAGE === "admin-app" ? "connexion.html" : "connexion.html";
-      if (PAGE === "admin-app" && window.RTD_STORE) {
-        var notifCount = window.RTD_STORE.getAdminNotificationCount();
-        if (notifCount > 0) {
-          actions.innerHTML += '<a class="app-exit" href="tableau-de-bord.html">Nouveautés<span class="unread-badge">' + notifCount + "</span></a>";
-        }
-      }
       actions.innerHTML += '<a class="app-exit" id="rtd-exit-link" href="' + exitHref + '">Se déconnecter</a>';
+      if (PAGE === "admin-app" && window.RTD_STORE) {
+        window.RTD_STORE.getAdminNotificationCount().then(function (notifCount) {
+          if (notifCount > 0) {
+            actions.insertAdjacentHTML("afterbegin", '<a class="app-exit" href="tableau-de-bord.html">Nouveautés<span class="unread-badge">' + notifCount + "</span></a>");
+          }
+        });
+      }
     } else if (PAGE === "admin-auth" || PAGE === "client-auth") {
       actions.innerHTML = '<a class="app-exit" href="' + BASE + 'index.html">Retour au site</a>';
     } else {
       actions.innerHTML =
-        '<a class="btn btn--ghost btn--sm" href="' + BASE + 'espace-client/inscription.html">Espace client</a>' +
-        '<a class="btn btn--stamp btn--sm" href="' + BASE + 'index.html#rdv">Prendre RDV</a>';
+        '<a class="btn btn--ghost btn--sm" href="' + BASE + 'espace-client/connexion.html">Connexion</a>' +
+        '<a class="btn btn--stamp btn--sm" href="' + BASE + 'espace-client/inscription.html">S\'inscrire</a>';
     }
     inner.appendChild(actions);
 

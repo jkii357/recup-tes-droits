@@ -1,6 +1,8 @@
 /*
  * admin-client.js — fiche client côté admin : édition du statut de dossier
- * (3 catégories × 3 états), revue des documents déposés, messagerie.
+ * (3 catégories × 3 états), revue des documents déposés, messagerie. Les
+ * données du client viennent de Firestore (store.js), partagées entre tous
+ * les appareils.
  */
 (function () {
   "use strict";
@@ -49,6 +51,7 @@
     document.getElementById("rtd-c-nom").textContent = client.prenom + " " + client.nom;
     document.getElementById("rtd-c-email").textContent = client.email;
     document.getElementById("rtd-c-tel").textContent = client.telephone;
+    document.getElementById("rtd-c-cp").textContent = client.codePostal ? "Code postal " + client.codePostal : "";
     document.getElementById("rtd-c-naissance").textContent = "Né(e) le " + new Date(client.dateNaissance).toLocaleDateString("fr-FR");
     document.getElementById("rtd-c-since").textContent = "Inscrit le " + new Date(client.creeLe).toLocaleDateString("fr-FR");
   }
@@ -68,41 +71,47 @@
     });
     wrap.querySelectorAll(".status-select").forEach(function (sel) {
       sel.addEventListener("change", function () {
-        window.RTD_STORE.updateClientEtape(client.id, sel.getAttribute("data-cat"), sel.value);
+        sel.disabled = true;
+        window.RTD_STORE.updateClientEtape(client.id, sel.getAttribute("data-cat"), sel.value).then(function () {
+          sel.disabled = false;
+        });
       });
     });
   }
 
   function renderDocuments(client) {
     var wrap = document.getElementById("rtd-doc-list");
-    var docs = window.RTD_STORE.getDocuments(client.id);
-    if (docs.length === 0) {
-      wrap.innerHTML = '<div class="empty-state"><strong>Aucun document déposé</strong>Les fichiers envoyés par le client depuis son espace apparaîtront ici.</div>';
-      return;
-    }
-    wrap.innerHTML = docs.map(function (doc) {
-      var typeInfo = window.RTD_STORE.DOCUMENT_TYPES.filter(function (t) { return t.id === doc.type; })[0];
-      return '<div class="doc-file-row">' +
-        '<span class="doc-file-row__name"><span>' + escapeHtml(typeInfo ? typeInfo.label : doc.type) + " — " + escapeHtml(doc.nomFichier) + " · " + formatSize(doc.tailleOctets) + "</span></span>" +
-        '<span class="doc-file-row__actions review-chip-select">' +
-          '<button type="button" data-open="' + doc.id + '">Ouvrir</button>' +
-          '<select class="status-select" data-doc-status="' + doc.id + '">' + optionsHtml(DOC_STATUT_OPTIONS, doc.statut) + "</select>" +
-        "</span></div>";
-    }).join("");
+    window.RTD_STORE.getDocuments(client.id).then(function (docs) {
+      if (docs.length === 0) {
+        wrap.innerHTML = '<div class="empty-state"><strong>Aucun document déposé</strong>Les fichiers envoyés par le client depuis son espace apparaîtront ici.</div>';
+        return;
+      }
+      wrap.innerHTML = docs.map(function (doc) {
+        var typeInfo = window.RTD_STORE.DOCUMENT_TYPES.filter(function (t) { return t.id === doc.type; })[0];
+        return '<div class="doc-file-row">' +
+          '<span class="doc-file-row__name"><span>' + escapeHtml(typeInfo ? typeInfo.label : doc.type) + " — " + escapeHtml(doc.nomFichier) + " · " + formatSize(doc.tailleOctets) + "</span></span>" +
+          '<span class="doc-file-row__actions review-chip-select">' +
+            '<button type="button" data-open="' + doc.id + '">Ouvrir</button>' +
+            '<select class="status-select" data-doc-status="' + doc.id + '">' + optionsHtml(DOC_STATUT_OPTIONS, doc.statut) + "</select>" +
+          "</span></div>";
+      }).join("");
 
-    wrap.querySelectorAll("button[data-open]").forEach(function (btn) {
-      btn.addEventListener("click", function () { window.RTD_FILES.openInNewTab(btn.getAttribute("data-open")); });
-    });
-    wrap.querySelectorAll("select[data-doc-status]").forEach(function (sel) {
-      sel.addEventListener("change", function () {
-        window.RTD_STORE.updateDocumentStatus(sel.getAttribute("data-doc-status"), sel.value);
+      wrap.querySelectorAll("button[data-open]").forEach(function (btn) {
+        btn.addEventListener("click", function () { window.RTD_FILES.openInNewTab(btn.getAttribute("data-open")); });
+      });
+      wrap.querySelectorAll("select[data-doc-status]").forEach(function (sel) {
+        sel.addEventListener("change", function () {
+          sel.disabled = true;
+          window.RTD_STORE.updateDocumentStatus(sel.getAttribute("data-doc-status"), sel.value).then(function () {
+            sel.disabled = false;
+          });
+        });
       });
     });
   }
 
-  function renderMessages(client) {
+  function renderMessages(client, msgs) {
     var thread = document.getElementById("rtd-msg-thread");
-    var msgs = window.RTD_STORE.getMessages(client.id);
     if (msgs.length === 0) {
       thread.innerHTML = '<p class="msg-empty">Aucun message pour le moment.</p>';
     } else {
@@ -116,33 +125,42 @@
 
   function initMessaging(client) {
     window.RTD_STORE.markMessagesRead(client.id);
-    renderMessages(client);
+    window.RTD_STORE.watchMessages(client.id, function (msgs) { renderMessages(client, msgs); });
     var form = document.getElementById("rtd-msg-form");
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var text = form.message.value.trim();
       if (!text) return;
-      window.RTD_STORE.addMessage(client.id, "admin", text);
-      form.message.value = "";
-      renderMessages(client);
-      if (window.RTD_NOTIFY_CLIENT) window.RTD_NOTIFY_CLIENT(client, text);
+      var submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      window.RTD_STORE.addMessage(client.id, "admin", text).then(function () {
+        form.message.value = "";
+        submitBtn.disabled = false;
+        if (window.RTD_NOTIFY_CLIENT) window.RTD_NOTIFY_CLIENT(client, text);
+      });
     });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     var id = new URLSearchParams(window.location.search).get("id");
-    var client = id ? window.RTD_STORE.getClient(id) : null;
-
-    if (!client) {
+    if (!id) {
       document.getElementById("rtd-client-fiche").hidden = true;
       document.getElementById("rtd-client-not-found").hidden = false;
       return;
     }
 
-    initTabs();
-    renderHeader(client);
-    renderDossier(client);
-    renderDocuments(client);
-    initMessaging(client);
+    window.RTD_STORE.getClient(id).then(function (client) {
+      if (!client) {
+        document.getElementById("rtd-client-fiche").hidden = true;
+        document.getElementById("rtd-client-not-found").hidden = false;
+        return;
+      }
+
+      initTabs();
+      renderHeader(client);
+      renderDossier(client);
+      renderDocuments(client);
+      initMessaging(client);
+    });
   });
 })();

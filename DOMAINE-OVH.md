@@ -2,35 +2,37 @@
 
 Le site est hébergé sur GitHub Pages (**https://jkii357.github.io/recup-tes-droits/**). Pour qu'il réponde sur **recuptesdroits.fr**, il faut dire à OVH où envoyer les visiteurs (ça, c'est toi/ton client qui le fait, je n'ai pas accès à son compte OVH) — le reste, je l'ai déjà préparé côté GitHub.
 
+## Le message « Site en construction » que tu vois actuellement, c'est normal
+
+Si tu tapes `recuptesdroits.fr` dans un navigateur aujourd'hui, tu tombes sur une page OVH « Site en construction ». Ce n'est pas un bug et il n'y a rien à cliquer dessus : c'est la page par défaut qu'OVH affiche pour **n'importe quel nom de domaine qui n'a pas encore été branché sur un site**, un peu comme un panonceau "local vide" devant un magasin. Elle disparaîtra toute seule une fois les étapes ci-dessous faites — pas besoin de la désactiver nulle part.
+
+Bonne nouvelle au passage : le fait que ce soit OVH qui affiche cette page prouve que c'est bien OVH qui gère le DNS de ce domaine. On est donc au bon endroit pour le brancher (étapes ci-dessous).
+
 ## Ce que j'ai déjà fait
 
 - Ajouté un fichier `CNAME` à la racine du site contenant `recuptesdroits.fr` (c'est ce qui dit à GitHub Pages "sers ce site aussi sur ce domaine").
-- Je vais renseigner `recuptesdroits.fr` dans les réglages GitHub Pages du dépôt.
+- Poussé ce fichier sur GitHub : dès que GitHub Pages le détecte, il active lui-même le domaine personnalisé dans les réglages du dépôt — aucune action manuelle supplémentaire n'est nécessaire côté GitHub.
 
-## Ce qu'il reste à faire chez OVH (par toi ou ton client)
+## ✅ Fait — configuration DNS terminée (13/10/2026)
 
-1. Connecte-toi sur **manager.ovh.com**, va dans **Noms de domaine → recuptesdroits.fr → Zone DNS**.
-2. Ajoute ces 4 enregistrements de type **A** (ils pointent le domaine nu `recuptesdroits.fr` vers les serveurs de GitHub) :
+Tu as obtenu un accès admin séparé sur le compte OVH du client (utilisateur `service-rtd`, voir plus bas), et j'ai fait la configuration directement depuis cet accès :
 
-   | Type | Sous-domaine | Cible |
-   |---|---|---|
-   | A | (laisser vide / @) | 185.199.108.153 |
-   | A | (laisser vide / @) | 185.199.109.153 |
-   | A | (laisser vide / @) | 185.199.110.153 |
-   | A | (laisser vide / @) | 185.199.111.153 |
+- Supprimé l'ancien enregistrement `@ A 51.91.236.255` (l'hébergement OVH par défaut, celui qui affichait la page « en construction »).
+- Supprimé les restes sur `www` (`A 51.91.236.255` et un `TXT "3|welcome"` qui bloquaient l'ajout du CNAME).
+- Les 4 enregistrements **A** vers GitHub sont bien présents sur `@` : `185.199.108/109/110/111.153` (vérifié directement sur le serveur DNS d'OVH).
+- Ajouté `www CNAME → jkii357.github.io.` (déjà visible publiquement au moment de la vérification).
 
-3. Ajoute aussi un enregistrement **CNAME** pour que `www.recuptesdroits.fr` fonctionne aussi :
+Propagation terminée — `http://recuptesdroits.fr` affiche déjà le vrai site. Côté HTTPS : GitHub a validé le DNS et a mis le certificat gratuit en **file d'attente d'émission** (automatique, je ne peux pas accélérer). Dès qu'il sera émis, j'activerai **« Enforce HTTPS »** — pas d'action de ta part, je repasserai vérifier.
 
-   | Type | Sous-domaine | Cible |
-   |---|---|---|
-   | CNAME | www | jkii357.github.io. |
+## Ton accès admin personnel sur le compte OVH du client
 
-4. Si des enregistrements A ou CNAME existent déjà sur `recuptesdroits.fr` (souvent mis par défaut par OVH, ex. vers une page de parking), **supprime-les** avant d'ajouter les nouveaux — sinon ça entre en conflit.
-5. Enregistre. La propagation DNS prend entre quelques minutes et 24h (en général moins d'une heure).
+Le client t'a créé un utilisateur séparé dans son compte OVH (Identité, Sécurité & Opérations → Identités → Utilisateurs locaux), pour que tu puisses gérer `recuptesdroits.fr` sans jamais utiliser son mot de passe principal :
 
-## Vérifier que ça marche
+- **Identifiant de connexion** : `ie52899-ovh/service-rtd`
+- **Email rattaché** : le tien (`kassongojustin@gmail.com`) — donc en cas de mot de passe oublié, le lien de récupération arrive directement chez toi, pas chez le client.
+- **Groupe** : `ADMIN` (droits complets sur les services du compte, dont le nom de domaine).
 
-Une fois la propagation faite, va sur `https://recuptesdroits.fr` — le site doit s'afficher. Dis-le-moi, j'irai alors activer **« Enforce HTTPS »** dans les réglages GitHub Pages (certificat gratuit automatique, GitHub ne peut l'activer qu'une fois le DNS détecté correctement).
+Pour la maintenance future, connecte-toi directement sur **manager.ovh.com** avec cet identifiant.
 
 ## Et la boîte mail support@recuptesdroits.fr ?
 

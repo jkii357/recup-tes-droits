@@ -26,6 +26,8 @@ Tout en haut du fichier, dans les 15-20 premières lignes, tu vas voir un bloc q
   --navy:        #0B1B33;
   --navy-deep:   #081425;
   --navy-raised: #122849;
+  --blue:        #4FC3DC;
+  --blue-deep:   #15647C;
   --red:         #D7263D;
   --red-dark:    #AD1E31;
   --paper:       #F7F5EF;
@@ -61,6 +63,8 @@ Une couleur à la fois, en revérifiant à chaque fois dans le navigateur. C'est
 | `--navy` | Le fond bleu nuit principal (header, fond de page, footer) |
 | `--navy-deep` | Le bleu encore plus foncé (bas du footer) |
 | `--navy-raised` | Le bleu un peu plus clair (dégradés, survol de boutons) |
+| `--blue` | Le bleu cyan du logo (dégradés du header/footer, halo autour du logo) |
+| `--blue-deep` | Le bleu cyan plus foncé, pour la transition des dégradés |
 | `--red` | Le rouge principal (bouton "Prendre rendez-vous", logo, accents) |
 | `--red-dark` | Le rouge plus foncé (quand on survole un bouton rouge avec la souris) |
 | `--paper` | Le blanc cassé des fiches/avis posés sur le fond bleu |
@@ -70,7 +74,7 @@ Une couleur à la fois, en revérifiant à chaque fois dans le navigateur. C'est
 
 ## Pour les dégradés (l'effet "plus dégradé" que tu as demandé)
 
-Un peu plus bas dans le même bloc `:root`, tu trouveras 5 lignes qui commencent par `--navy-gradient`, `--header-gradient`, `--footer-gradient`, `--red-gradient`, `--navy-btn-gradient`. Elles ressemblent à ça :
+Un peu plus bas dans le même bloc `:root`, tu trouveras 6 lignes qui commencent par `--navy-gradient`, `--header-gradient`, `--footer-gradient`, `--red-gradient`, `--navy-btn-gradient`, `--blue-gradient`. Le header et le footer utilisent maintenant `--blue-deep` au départ du dégradé pour reprendre le bleu du logo. Elles ressemblent à ça :
 
 ```css
 --red-gradient: linear-gradient(135deg, #E0384D 0%, var(--red) 45%, var(--red-dark) 100%);

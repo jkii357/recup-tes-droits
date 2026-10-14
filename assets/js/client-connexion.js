@@ -6,10 +6,9 @@
   "use strict";
 
   document.addEventListener("DOMContentLoaded", function () {
-    if (window.RTD_STORE.getCurrentClient()) {
-      window.location.replace("tableau-de-bord.html");
-      return;
-    }
+    window.RTD_STORE.getCurrentClient().then(function (client) {
+      if (client) window.location.replace("tableau-de-bord.html");
+    });
 
     var form = document.getElementById("rtd-connexion-form");
     if (!form) return;
@@ -20,11 +19,12 @@
       e.preventDefault();
       var email = form.email.value.trim();
       var motDePasse = form.motDePasse.value;
+      var remember = form.seSouvenir.checked;
 
       statusEl.className = "form-status";
       submitBtn.disabled = true;
 
-      window.RTD_STORE.authenticateClient(email, motDePasse).then(function (client) {
+      window.RTD_STORE.authenticateClient(email, motDePasse, remember).then(function (client) {
         if (client) {
           window.location.href = "tableau-de-bord.html";
           return;

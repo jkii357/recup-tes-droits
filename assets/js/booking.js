@@ -1,8 +1,9 @@
 /*
- * booking.js — widget de prise de RDV (page d'accueil). Démo : pas de vrai
- * Calendly connecté. Créneaux toutes les 30 min, 9h-19h, du lundi au
- * samedi. Un couple date+heure déjà réservé par quelqu'un d'autre
- * disparaît de la liste — les autres heures du même jour restent proposées.
+ * booking.js — widget de prise de RDV (page d'accueil). Créneaux toutes les
+ * 30 min, 9h-19h, du lundi au samedi. Un couple date+heure déjà réservé par
+ * quelqu'un d'autre (sur n'importe quel appareil, les RDV étant partagés via
+ * Firestore) disparaît de la liste — les autres heures du même jour restent
+ * proposées.
  */
 (function () {
   "use strict";
@@ -83,6 +84,11 @@
 
     if (todayEl) todayEl.textContent = "Aujourd'hui, " + formatTodayLabel();
 
+    function bookedSlotsFrom(appointments) {
+      var today = window.RTD_STORE.todayIso();
+      return appointments.filter(function (a) { return a.date >= today; }).map(function (a) { return a.date + "|" + a.heure; });
+    }
+
     function renderSlots(bookedSlots) {
       slotList.innerHTML = "";
       var iso = formatDateIso(selectedDate);
@@ -106,8 +112,7 @@
       });
     }
 
-    function renderDates() {
-      var bookedSlots = window.RTD_STORE.getBookedSlots();
+    function renderDates(bookedSlots) {
       var dates = nextAvailableDates(NB_DATES, bookedSlots);
       dateList.innerHTML = "";
       dates.forEach(function (d, i) {
@@ -123,7 +128,7 @@
           Array.prototype.forEach.call(dateList.children, function (c) { c.classList.remove("is-selected"); });
           btn.classList.add("is-selected");
           slotWrap.hidden = false;
-          renderSlots(window.RTD_STORE.getBookedSlots());
+          renderSlots(lastBookedSlots);
         });
         dateList.appendChild(btn);
       });
@@ -133,16 +138,26 @@
         formStep.hidden = true;
         return;
       }
-      selectedDate = dates[0];
+      /* Si la date sélectionnée n'existe plus (vient d'être entièrement prise
+         par quelqu'un d'autre), on retombe sur la première disponible. */
+      if (!selectedDate || !dates.some(function (d) { return formatDateIso(d) === formatDateIso(selectedDate); })) {
+        selectedDate = dates[0];
+      } else {
+        dateList.querySelectorAll(".rtd-slot-chip").forEach(function (c) {
+          c.classList.toggle("is-selected", c.textContent === formatDateLabel(selectedDate));
+        });
+      }
       slotWrap.hidden = false;
       renderSlots(bookedSlots);
     }
-    renderDates();
 
-    /* Si quelqu'un d'autre réserve pendant que la page est ouverte (démo multi-onglets),
-       les dates et créneaux affichés se mettent à jour tout seuls. */
-    window.addEventListener("storage", function (e) {
-      if (e.key === window.RTD_STORE.KEYS.APPOINTMENTS && document.getElementById("rtd-booking-dates")) renderDates();
+    var lastBookedSlots = [];
+    /* Abonnement en direct : si quelqu'un réserve pendant que la page est
+       ouverte — même depuis un autre appareil — les dates et créneaux
+       affichés se mettent à jour tout seuls. */
+    window.RTD_STORE.watchAppointments(function (appointments) {
+      lastBookedSlots = bookedSlotsFrom(appointments);
+      renderDates(lastBookedSlots);
     });
 
     form.addEventListener("submit", function (e) {
@@ -168,25 +183,36 @@
 
       if (!ok) return;
 
+      var submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
       /* Dernière vérification juste avant l'envoi : si quelqu'un a pris ce créneau
          entre-temps, on prévient plutôt que de créer un doublon. */
-      var stillFree = window.RTD_STORE.getBookedSlots().indexOf(formatDateIso(selectedDate) + "|" + selectedHeure) === -1;
-      if (!stillFree) {
-        statusEl.textContent = "Ce créneau vient d'être pris par quelqu'un d'autre — choisis-en un autre.";
+      window.RTD_STORE.getBookedSlots().then(function (bookedSlots) {
+        var stillFree = bookedSlots.indexOf(formatDateIso(selectedDate) + "|" + selectedHeure) === -1;
+        if (!stillFree) {
+          submitBtn.disabled = false;
+          statusEl.textContent = "Ce créneau vient d'être pris par quelqu'un d'autre — choisis-en un autre.";
+          statusEl.className = "form-status form-status--err is-visible";
+          renderSlots(bookedSlots);
+          formStep.hidden = true;
+          return;
+        }
+
+        return window.RTD_STORE.addAppointment({
+          prenom: prenom, nom: nom, email: email, telephone: telephone,
+          date: formatDateIso(selectedDate), heure: selectedHeure
+        }).then(function () {
+          recapEl.textContent = formatDateLabel(selectedDate) + " à " + selectedHeure;
+          root.querySelector("#rtd-booking-steps").hidden = true;
+          confirmStep.hidden = false;
+        });
+      }).catch(function (e) {
+        submitBtn.disabled = false;
+        statusEl.textContent = "Une erreur est survenue, réessaie dans un instant.";
         statusEl.className = "form-status form-status--err is-visible";
-        renderSlots(window.RTD_STORE.getBookedSlots());
-        formStep.hidden = true;
-        return;
-      }
-
-      window.RTD_STORE.addAppointment({
-        prenom: prenom, nom: nom, email: email, telephone: telephone,
-        date: formatDateIso(selectedDate), heure: selectedHeure
+        console.error(e);
       });
-
-      recapEl.textContent = formatDateLabel(selectedDate) + " à " + selectedHeure;
-      root.querySelector("#rtd-booking-steps").hidden = true;
-      confirmStep.hidden = false;
     });
   }
 
